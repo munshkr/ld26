@@ -22,38 +22,20 @@ class Game < Chingu::Window
   def update
     super
 
-    if button_down?(KbLeft) and button_down?(KbUp)
-      if not @already_pressed
+    if @player.still?
+      if button_down?(KbLeft) and button_down?(KbUp)
         @player.move_up_left
-        @already_pressed = true
-      end
-    elsif button_down?(KbRight) and button_down?(KbUp)
-      if not @already_pressed
+      elsif button_down?(KbRight) and button_down?(KbUp)
         @player.move_up_right
-        @already_pressed = true
-      end
-    elsif button_down?(KbLeft) and button_down?(KbDown)
-      if not @already_pressed
+      elsif button_down?(KbLeft) and button_down?(KbDown)
         @player.move_down_left
-        @already_pressed = true
-      end
-    elsif button_down?(KbRight) and button_down?(KbDown)
-      if not @already_pressed
+      elsif button_down?(KbRight) and button_down?(KbDown)
         @player.move_down_right
-        @already_pressed = true
-      end
-    elsif button_down?(KbLeft)
-      if not @already_pressed
+      elsif button_down?(KbLeft)
         @player.move_left
-        @already_pressed = true
-      end
-    elsif button_down?(KbRight)
-      if not @already_pressed
+      elsif button_down?(KbRight)
         @player.move_right
-        @already_pressed = true
       end
-    else
-      @already_pressed = false
     end
   end
 end
@@ -92,10 +74,20 @@ end
 class Cell < Chingu::GameObject
   WIDTH, HEIGHT = [48, 48]
   COLOR = Color::WHITE
+  COLOR.alpha = 80
+
+  def center_x
+    @x + WIDTH / 2
+  end
+
+  def center_y
+    @y + HEIGHT / 2
+  end
 end
 
 class Player < Chingu::GameObject
   WIDTH, HEIGHT = [16, 16]
+  VELOCITY_INC = 0.5
 
   def initialize(*args)
     super
@@ -112,32 +104,60 @@ class Player < Chingu::GameObject
     end
   end
 
+  def update
+    case @movement_direction
+    when :left
+      @velocity_x ||= 0
+      if @x < @original_x - Cell::WIDTH
+        @velocity_x = 0
+        #@x = @original_x - Cell::WIDTH
+        @movement_direction = nil
+      elsif @x < @original_x - Cell::WIDTH / 2
+        @velocity_x -= VELOCITY_INC
+      else
+        @velocity_x += VELOCITY_INC
+      end
+      @x -= @velocity_x
+    else
+      @original_x = @x
+    end
+  end
+
+  def moving?
+    !!@movement_direction
+  end
+
+  def still?
+    not moving?
+  end
+
   def move_left
-    @x -= Cell::WIDTH
+    @movement_direction = :left
   end
 
   def move_right
-    @x += Cell::WIDTH
+    #@x += Cell::WIDTH
+    @movement_direction = :right
   end
 
   def move_up_left
-    @x -= Cell::WIDTH / 2
-    @y -= Cell::HEIGHT / 4 * 3
+    #@x -= Cell::WIDTH / 2
+    #@y -= Cell::HEIGHT / 4 * 3
   end
 
   def move_up_right
-    @x += Cell::WIDTH / 2
-    @y -= Cell::HEIGHT / 4 * 3
+    #@x += Cell::WIDTH / 2
+    #@y -= Cell::HEIGHT / 4 * 3
   end
 
   def move_down_left
-    @x -= Cell::WIDTH / 2
-    @y += Cell::HEIGHT / 4 * 3
+    #@x -= Cell::WIDTH / 2
+    #@y += Cell::HEIGHT / 4 * 3
   end
 
   def move_down_right
-    @x += Cell::WIDTH / 2
-    @y += Cell::HEIGHT / 4 * 3
+    #@x += Cell::WIDTH / 2
+    #@y += Cell::HEIGHT / 4 * 3
   end
 end
 
