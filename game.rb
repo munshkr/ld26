@@ -51,15 +51,15 @@ class Play < Chingu::GameState
   end
 
   def advance
-    # TODO
+    @player.advance
   end
 
   def rotate_left
-    # TODO
+    @player.rotate_left
   end
 
   def rotate_right
-    # TODO
+    @player.rotate_right
   end
 end
 
@@ -69,35 +69,31 @@ class Honeycomb < Chingu::GameObjectList
   def initialize(options={})
     super
 
-    cell_image = create_cell_image
+    #@cell_adjacency_list = {}
 
-    @cells = (-32 .. 32).map do |i|
-      (-32 .. 32).map do |j|
+    (-32 .. 32).each do |i|
+      (-32 .. 32).each do |j|
         x = (i * Cell::WIDTH + (j % 2 == 0 ? Cell::WIDTH / 2 : 0))
         y = j * Cell::HEIGHT / 4 * 3
 
         cell = Cell.new(x: x, y: y,
-                        center_x: x + Cell::WIDTH / 2, center_y: y + Cell::HEIGHT / 2,
-                        image: cell_image)
+                        center_x: x + Cell::WIDTH / 2,
+                        center_y: y + Cell::HEIGHT / 2)
+        #@cell_adjacency_list[cell]
+
+        add_random_gates(cell)
 
         add_game_object(cell)
       end
     end
   end
 
-  def create_cell_image
-    image = TexPlay.create_blank_image($window, Cell::WIDTH * 3, Cell::HEIGHT * 3)
-    image.paint do
-      polyline [
-        Cell::WIDTH / 2, 0,
-        Cell::WIDTH, Cell::HEIGHT / 4,
-        Cell::WIDTH, Cell::HEIGHT / 4 * 3,
-        Cell::WIDTH / 2, Cell::HEIGHT,
-        0, Cell::HEIGHT / 4 * 3,
-        0, Cell::HEIGHT / 4,
-      ], close: true, thickness: 2, color: Cell::COLOR
+  # NOTE temporal
+  def add_random_gates(cell)
+    cell.gates = []
+    [:up, :down, :left, :right, :diag].each do |gate|
+      cell.gates << gate if rand(4).zero?
     end
-    image
   end
 end
 
@@ -106,12 +102,74 @@ class Cell < Chingu::GameObject
   COLOR = Color::WHITE
   COLOR.alpha = 80
 
+  attr_accessor :gates
+
+  def initialize(options={})
+    super(options.merge(image: self.class.cell_image))
+  end
+
+  def draw
+    super
+    gates.each do |gate|
+      self.class.gate_image(gate).draw(self.center_x, self.y, 0)
+    end
+  end
+
   def center_x
     @x + WIDTH / 2
   end
 
   def center_y
     @y + HEIGHT / 2
+  end
+
+  def self.cell_image
+    @cell_image ||= begin
+      image = TexPlay.create_blank_image($window, WIDTH * 3, HEIGHT * 3)
+      image.paint do
+        polyline [
+          WIDTH / 2, 0,
+          WIDTH, HEIGHT / 4,
+          WIDTH, HEIGHT / 4 * 3,
+          WIDTH / 2, HEIGHT,
+          0, HEIGHT / 4 * 3,
+          0, HEIGHT / 4,
+        ], close: true, thickness: 2, color: COLOR
+      end
+      image
+    end
+  end
+
+  def self.gate_image(gate)
+    @gate_images ||= {}
+    @gate_images[gate] ||= begin
+      image = TexPlay.create_blank_image($window, WIDTH * 3, HEIGHT * 3)
+      image.paint do
+        case gate
+        when :up
+          line WIDTH / 2, 0,
+               WIDTH, HEIGHT / 4,
+               thickness: 3, color: Color::GREEN
+        when :right
+          line WIDTH, HEIGHT / 4,
+               WIDTH, HEIGHT / 4 * 3,
+               thickness: 3, color: Color::GREEN
+        when :down
+          line WIDTH, HEIGHT / 4 * 3,
+               WIDTH / 2, HEIGHT,
+               thickness: 3, color: Color::GREEN
+        when :diag
+          line WIDTH / 2, HEIGHT,
+               0, HEIGHT / 4 * 3,
+               thickness: 3, color: Color::GREEN
+        when :left
+          line 0, HEIGHT / 4 * 3,
+               0, HEIGHT / 4,
+               thickness: 3, color: Color::GREEN
+        end
+      end
+      image
+    end
   end
 end
 
@@ -134,60 +192,13 @@ class Player < Chingu::GameObject
     end
   end
 
-  def update
-    case @movement_direction
-    when :left
-      @velocity_x ||= 0
-      if @x < @original_x - Cell::WIDTH
-        @velocity_x = 0
-        #@x = @original_x - Cell::WIDTH
-        @movement_direction = nil
-      elsif @x < @original_x - Cell::WIDTH / 2
-        @velocity_x -= VELOCITY_INC
-      else
-        @velocity_x += VELOCITY_INC
-      end
-      @x -= @velocity_x
-    else
-      @original_x = @x
-    end
+  def advance
   end
 
-  def moving?
-    !!@movement_direction
+  def rotate_left
   end
 
-  def still?
-    not moving?
-  end
-
-  def move_left
-    @movement_direction = :left
-  end
-
-  def move_right
-    #@x += Cell::WIDTH
-    @movement_direction = :right
-  end
-
-  def move_up_left
-    #@x -= Cell::WIDTH / 2
-    #@y -= Cell::HEIGHT / 4 * 3
-  end
-
-  def move_up_right
-    #@x += Cell::WIDTH / 2
-    #@y -= Cell::HEIGHT / 4 * 3
-  end
-
-  def move_down_left
-    #@x -= Cell::WIDTH / 2
-    #@y += Cell::HEIGHT / 4 * 3
-  end
-
-  def move_down_right
-    #@x += Cell::WIDTH / 2
-    #@y += Cell::HEIGHT / 4 * 3
+  def rotate_right
   end
 end
 
