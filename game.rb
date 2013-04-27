@@ -25,7 +25,9 @@ class Play < Chingu::GameState
     super
 
     @honeycomb = Honeycomb.new
-    @player = Player.create(x: $window.width / 2, y: $window.height / 2, angle: 180)
+    @player = Player.create(x: $window.width / 2,
+                            y: $window.height / 2,
+                            current_cell: @honeycomb.first)
 
     every(500, name: :move) do
       advance
@@ -71,18 +73,21 @@ class Honeycomb < Chingu::GameObjectList
 
     #@cell_adjacency_list = {}
 
+    offset_x = Cell::WIDTH / 4
+    offset_y = Cell::HEIGHT / 2
+
     (-32 .. 32).each do |i|
       (-32 .. 32).each do |j|
-        x = (i * Cell::WIDTH + (j % 2 == 0 ? Cell::WIDTH / 2 : 0))
-        y = j * Cell::HEIGHT / 4 * 3
+        x = offset_x + (i * Cell::WIDTH + (j % 2 == 0 ? Cell::WIDTH / 2 : 0))
+        y = offset_y + (j * Cell::HEIGHT / 4 * 3)
 
         cell = Cell.new(x: x, y: y,
                         center_x: x + Cell::WIDTH / 2,
                         center_y: y + Cell::HEIGHT / 2)
+
         #@cell_adjacency_list[cell]
 
         add_random_gates(cell)
-
         add_game_object(cell)
       end
     end
@@ -92,15 +97,15 @@ class Honeycomb < Chingu::GameObjectList
   def add_random_gates(cell)
     cell.gates = []
     [:up, :down, :left, :right, :diag].each do |gate|
-      cell.gates << gate if rand(4).zero?
+      cell.gates << gate if rand(6).zero?
     end
   end
 end
 
 class Cell < Chingu::GameObject
-  WIDTH, HEIGHT = [48, 48]
+  WIDTH, HEIGHT = [64, 64]
   COLOR = Color::WHITE
-  COLOR.alpha = 80
+  COLOR.alpha = 60
 
   attr_accessor :gates
 
@@ -110,17 +115,18 @@ class Cell < Chingu::GameObject
 
   def draw
     super
+
     gates.each do |gate|
       self.class.gate_image(gate).draw(self.center_x, self.y, 0)
     end
   end
 
   def center_x
-    @x + WIDTH / 2
+    self.x + WIDTH / 2
   end
 
   def center_y
-    @y + HEIGHT / 2
+    self.y + HEIGHT / 2
   end
 
   def self.cell_image
@@ -177,13 +183,15 @@ class Player < Chingu::GameObject
   WIDTH, HEIGHT = [16, 16]
   VELOCITY_INC = 0.5
 
-  def initialize(*args)
+  def initialize(options={})
     super
+
+    self.angle = 180
 
     @color = options[:color] || Color::BLUE
 
-    @image = TexPlay.create_blank_image($window, WIDTH + 2, HEIGHT + 3)
-    @image.paint do
+    self.image = TexPlay.create_blank_image($window, WIDTH + 2, HEIGHT + 3)
+    self.image.paint do
       polyline [
         WIDTH, 0,
         0, HEIGHT / 2,
