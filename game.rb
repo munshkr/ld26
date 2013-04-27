@@ -10,47 +10,77 @@ class Game < Chingu::Window
   def initialize
     super 800, 600, false
 
+    push_game_state(Play)
+
     self.input = {
-      [:escape] => :exit,
+      escape: :exit,
     }
+  end
+end
+
+class Play < Chingu::GameState
+  trait :timer
+
+  def initialize
+    super
 
     @honeycomb = Honeycomb.new
-    center_cell = @honeycomb.cells[8][8]
-    @player = Player.create(x: center_cell.x, y: center_cell.y + Cell::HEIGHT / 2)
+    @player = Player.create(x: $window.width / 2, y: $window.height / 2, angle: 180)
+
+    every(500, name: :move) do
+      advance
+    end
+
+    self.input = {
+      left: :rotate_left,
+      right: :rotate_right,
+    }
   end
 
   def update
     super
 
-    if @player.still?
-      if button_down?(KbLeft) and button_down?(KbUp)
-        @player.move_up_left
-      elsif button_down?(KbRight) and button_down?(KbUp)
-        @player.move_up_right
-      elsif button_down?(KbLeft) and button_down?(KbDown)
-        @player.move_down_left
-      elsif button_down?(KbRight) and button_down?(KbDown)
-        @player.move_down_right
-      elsif button_down?(KbLeft)
-        @player.move_left
-      elsif button_down?(KbRight)
-        @player.move_right
-      end
-    end
+    $window.caption = "FPS #{$window.fps} - " \
+      "milliseconds_since_last_tick: #{$window.milliseconds_since_last_tick} - " \
+      "game objects #{current_game_state.game_objects.size}"
+  end
+
+  def draw
+    @honeycomb.draw
+    super
+  end
+
+  def advance
+    # TODO
+  end
+
+  def rotate_left
+    # TODO
+  end
+
+  def rotate_right
+    # TODO
   end
 end
 
-class Honeycomb
+class Honeycomb < Chingu::GameObjectList
   attr_reader :cells
 
-  def initialize
+  def initialize(options={})
+    super
+
     cell_image = create_cell_image
 
-    @cells = (0 .. 32).map do |i|
-      (0 .. 32).map do |j|
-        Cell.create(x: i * Cell::WIDTH + (j % 2 == 0 ? Cell::WIDTH / 2 : 0),
-                    y: j * Cell::HEIGHT / 4 * 3,
-                    image: cell_image)
+    @cells = (-32 .. 32).map do |i|
+      (-32 .. 32).map do |j|
+        x = (i * Cell::WIDTH + (j % 2 == 0 ? Cell::WIDTH / 2 : 0))
+        y = j * Cell::HEIGHT / 4 * 3
+
+        cell = Cell.new(x: x, y: y,
+                        center_x: x + Cell::WIDTH / 2, center_y: y + Cell::HEIGHT / 2,
+                        image: cell_image)
+
+        add_game_object(cell)
       end
     end
   end
@@ -65,7 +95,7 @@ class Honeycomb
         Cell::WIDTH / 2, Cell::HEIGHT,
         0, Cell::HEIGHT / 4 * 3,
         0, Cell::HEIGHT / 4,
-      ], close: true, thickness: 1, color: Cell::COLOR
+      ], close: true, thickness: 2, color: Cell::COLOR
     end
     image
   end
