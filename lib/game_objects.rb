@@ -1,12 +1,12 @@
 class Cell < Chingu::GameObject
   RADIUS = 64
   DIAMETER = RADIUS * 2
-  GATE_WIDTH = 5
+  WALL_WIDTH = 5
 
   COLOR = Color::WHITE
   COLOR.alpha = 60
 
-  attr_accessor :gates
+  attr_accessor :walls
 
   def initialize(options={})
     super(options.merge(image: self.class.cell_image))
@@ -14,7 +14,7 @@ class Cell < Chingu::GameObject
 
   def draw
     super
-    draw_gates
+    draw_walls
   end
 
   def self.cell_image
@@ -27,46 +27,46 @@ class Cell < Chingu::GameObject
     end
   end
 
-  def self.gate_image(gate)
-    @gate_images ||= {}
-    @gate_images[gate] ||= begin
+  def self.wall_image(wall)
+    @wall_images ||= {}
+    @wall_images[wall] ||= begin
       image = TexPlay.create_blank_image($window, DIAMETER + 1, DIAMETER + 1)
       image.paint do
-        case gate
+        case wall
         when :right
           line RADIUS * 1.5, 0,
                RADIUS * 2,   RADIUS * Math.sqrt(3) / 2.0,
-               thickness: GATE_WIDTH, color: Color::GREEN
+               thickness: WALL_WIDTH, color: Color::GREEN
         when :down
           line RADIUS * 2,   RADIUS * Math.sqrt(3) / 2.0,
                RADIUS * 1.5, RADIUS * Math.sqrt(3),
-               thickness: GATE_WIDTH, color: Color::GREEN
+               thickness: WALL_WIDTH, color: Color::GREEN
         when :down_left
           line RADIUS * 0.5, RADIUS * Math.sqrt(3),
                RADIUS * 1.5, RADIUS * Math.sqrt(3),
-               thickness: GATE_WIDTH, color: Color::GREEN
+               thickness: WALL_WIDTH, color: Color::GREEN
         when :left
           line RADIUS * 0.5, RADIUS * Math.sqrt(3),
                0,            RADIUS * Math.sqrt(3) / 2.0,
-               thickness: GATE_WIDTH, color: Color::GREEN
+               thickness: WALL_WIDTH, color: Color::GREEN
         when :up_left
           line 0,            RADIUS * Math.sqrt(3) / 2.0,
                RADIUS * 0.5, 0,
-               thickness: GATE_WIDTH, color: Color::GREEN
+               thickness: WALL_WIDTH, color: Color::GREEN
         when :up
           line RADIUS * 0.5, 0,
                RADIUS * 1.5, 0,
-               thickness: GATE_WIDTH, color: Color::GREEN
+               thickness: WALL_WIDTH, color: Color::GREEN
         end
       end
       image
     end
   end
 
-  def draw_gates
-    gates.each do |gate|
-      self.class.gate_image(gate).draw(self.x - RADIUS, self.y - RADIUS * (Math.sqrt(3) / 2.0), 0)
-      #self.class.gate_image(gate).draw(self.x, self.y, 0)
+  def draw_walls
+    walls.each do |wall|
+      self.class.wall_image(wall).draw(self.x - RADIUS, self.y - RADIUS * (Math.sqrt(3) / 2.0), 0)
+      #self.class.wall_image(wall).draw(self.x, self.y, 0)
     end
   end
 end
@@ -149,21 +149,23 @@ class Honeycomb
 
   def new_cell(x, y)
     cell = Cell.new(x: x, y: y)
-    add_random_gates(cell)
+    add_random_walls(cell)
     cell
   end
 
   # NOTE temporal
-  def add_random_gates(cell)
-    cell.gates = []
-    [:right, :down, :down_left, :left, :up_left, :up].each do |gate|
-      cell.gates << gate if rand(6).zero?
+  def add_random_walls(cell)
+    cell.walls = []
+    [:right, :down, :down_left, :left, :up_left, :up].each do |wall|
+      cell.walls << wall if rand(6).zero?
     end
   end
 end
 
 
 class Player < Chingu::GameObject
+  trait :collision_detection
+
   WIDTH, HEIGHT = [16, 16]
   VELOCITY_INC = 0.5
 
@@ -182,6 +184,8 @@ class Player < Chingu::GameObject
         WIDTH, HEIGHT
       ], close: true, thickness: 2, color: @color
     end
+
+    cache_bounding_box
   end
 
   def advance
