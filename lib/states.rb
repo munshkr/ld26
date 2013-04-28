@@ -27,7 +27,6 @@ class Play < Chingu::GameState
 
     self.input = {
       holding_up: :advance,
-      holding_down: :retreat,
       holding_left: :rotate_left,
       holding_right: :rotate_right,
     }
@@ -96,12 +95,6 @@ class Play < Chingu::GameState
       @advance_change_x = offset_x(90 - @camera_angle, dist)
       @advance_change_y = offset_y(90 - @camera_angle, dist)
     end
-  end
-
-  def retreat
-    dist = Cell::RADIUS * Math.sqrt(3)
-    @camera_x -= offset_x(90 - @camera_angle, dist)
-    @camera_y -= offset_y(90 - @camera_angle, dist)
   end
 
   def rotate_left
