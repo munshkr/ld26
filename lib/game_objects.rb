@@ -6,17 +6,18 @@ class Honeycomb < Chingu::GameObjectList
 
     #@cell_adjacency_list = {}
 
-    offset_x = -(Cell::WIDTH / 2)
-    offset_y = -(Cell::HEIGHT / 2)
+    offset_x = -(Cell::WIDTH * 3 / 4.0)
+    offset_y = 0
 
     (-32 .. 32).each do |i|
       (-32 .. 32).each do |j|
-        x = offset_x + (i * Cell::WIDTH + (j % 2 == 0 ? Cell::WIDTH / 2 : 0))
-        y = offset_y + (j * Cell::HEIGHT / 4 * 3)
+        x = offset_x + i * (Cell::WIDTH * 3 / 2.0)
+        if j % 2 == 0
+          x += Cell::WIDTH * 3 / 4.0
+        end
+        y = offset_y + (j * (((Cell::WIDTH / 2) * Math.sqrt(3)) / 2.0))
 
-        cell = Cell.new(x: x, y: y,
-                        center_x: x + Cell::WIDTH / 2,
-                        center_y: y + Cell::HEIGHT / 2)
+        cell = Cell.new(x: x, y: y)
 
         #@cell_adjacency_list[cell]
 
@@ -48,32 +49,14 @@ class Cell < Chingu::GameObject
 
   def draw
     super
-
-    gates.each do |gate|
-      self.class.gate_image(gate).draw(self.center_x, self.y, 0)
-    end
-  end
-
-  def center_x
-    self.x + WIDTH / 2
-  end
-
-  def center_y
-    self.y + HEIGHT / 2
+    #draw_gates
   end
 
   def self.cell_image
     @cell_image ||= begin
-      image = TexPlay.create_blank_image($window, WIDTH * 3, HEIGHT * 3)
+      image = TexPlay.create_blank_image($window, WIDTH + 1, WIDTH + 1)
       image.paint do
-        polyline [
-          WIDTH / 2, 0,
-          WIDTH, HEIGHT / 4,
-          WIDTH, HEIGHT / 4 * 3,
-          WIDTH / 2, HEIGHT,
-          0, HEIGHT / 4 * 3,
-          0, HEIGHT / 4,
-        ], close: true, thickness: 2, color: COLOR
+        ngon WIDTH / 2, WIDTH / 2, WIDTH / 2, 6, thickness: 2, color: COLOR
       end
       image
     end
@@ -108,6 +91,12 @@ class Cell < Chingu::GameObject
         end
       end
       image
+    end
+  end
+
+  def draw_gates
+    gates.each do |gate|
+      self.class.gate_image(gate).draw(self.x, self.y, 0)
     end
   end
 end

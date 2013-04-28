@@ -12,7 +12,7 @@ class Play < Chingu::GameState
     @player = Player.create(x: 0, y: 0,
                             current_cell: @honeycomb.first)
 
-    @camera_angle = 0
+    @camera_angle = 30
 
     every(500, name: :move) do
       advance
