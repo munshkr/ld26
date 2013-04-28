@@ -46,6 +46,7 @@ end
 class Cell < Chingu::GameObject
   RADIUS = 64
   DIAMETER = RADIUS * 2
+  GATE_WIDTH = 5
 
   COLOR = Color::WHITE
   COLOR.alpha = 60
@@ -80,27 +81,27 @@ class Cell < Chingu::GameObject
         when :right
           line RADIUS * 1.5, 0,
                RADIUS * 2,   RADIUS * Math.sqrt(3) / 2.0,
-               thickness: 2, color: Color::GREEN
+               thickness: GATE_WIDTH, color: Color::GREEN
         when :down
           line RADIUS * 2,   RADIUS * Math.sqrt(3) / 2.0,
                RADIUS * 1.5, RADIUS * Math.sqrt(3),
-               thickness: 2, color: Color::GREEN
+               thickness: GATE_WIDTH, color: Color::GREEN
         when :down_left
           line RADIUS * 0.5, RADIUS * Math.sqrt(3),
                RADIUS * 1.5, RADIUS * Math.sqrt(3),
-               thickness: 2, color: Color::GREEN
+               thickness: GATE_WIDTH, color: Color::GREEN
         when :left
           line RADIUS * 0.5, RADIUS * Math.sqrt(3),
                0,            RADIUS * Math.sqrt(3) / 2.0,
-               thickness: 2, color: Color::GREEN
+               thickness: GATE_WIDTH, color: Color::GREEN
         when :up_left
           line 0,            RADIUS * Math.sqrt(3) / 2.0,
                RADIUS * 0.5, 0,
-               thickness: 2, color: Color::GREEN
+               thickness: GATE_WIDTH, color: Color::GREEN
         when :up
           line RADIUS * 0.5, 0,
                RADIUS * 1.5, 0,
-               thickness: 2, color: Color::GREEN
+               thickness: GATE_WIDTH, color: Color::GREEN
         end
       end
       image

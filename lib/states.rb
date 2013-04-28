@@ -1,9 +1,13 @@
 require "game_objects"
+require "util"
+
+include Util
 
 class Play < Chingu::GameState
   trait :timer
 
   ANGLE_STEP = 60
+  DURATION_ROTATION = 500
 
   def initialize
     super
@@ -31,6 +35,22 @@ class Play < Chingu::GameState
   def update
     super
 
+    # animations
+    if rotating?
+      t = Gosu::milliseconds - @rotation_old_time
+      if t > DURATION_ROTATION
+        @camera_angle = @rotation_old_camera_angle + @rotation_change
+        @rotation_change = nil
+        @player.rotate_right
+      else
+        b = @rotation_old_camera_angle
+        c = @rotation_change
+        val = ease_in_out_quad(t, b, c, DURATION_ROTATION)
+        puts val
+        @camera_angle = val
+      end
+    end
+
     $window.caption = "FPS #{$window.fps} - " \
       "milliseconds_since_last_tick: #{$window.milliseconds_since_last_tick} - " \
       "game objects #{current_game_state.game_objects.size}"
@@ -49,11 +69,13 @@ class Play < Chingu::GameState
   end
 
   def advance
-    dist = Cell::RADIUS * Math.sqrt(3)
-    @camera_x += offset_x(90 - @camera_angle, dist)
-    @camera_y += offset_y(90 - @camera_angle, dist)
+    if not rotating?
+      dist = Cell::RADIUS * Math.sqrt(3)
+      @camera_x += offset_x(90 - @camera_angle, dist)
+      @camera_y += offset_y(90 - @camera_angle, dist)
 
-    @player.advance
+      @player.advance
+    end
   end
 
   def retreat
@@ -63,12 +85,22 @@ class Play < Chingu::GameState
   end
 
   def rotate_left
-    @camera_angle += ANGLE_STEP
-    @player.rotate_left
+    if not rotating?
+      @rotation_old_camera_angle = @camera_angle
+      @rotation_old_time = Gosu::milliseconds
+      @rotation_change = ANGLE_STEP
+    end
   end
 
   def rotate_right
-    @camera_angle -= ANGLE_STEP
-    @player.rotate_right
+    if not rotating?
+      @rotation_old_camera_angle = @camera_angle
+      @rotation_old_time = Gosu::milliseconds
+      @rotation_change = -ANGLE_STEP
+    end
+  end
+
+  def rotating?
+    !!@rotation_change
   end
 end
