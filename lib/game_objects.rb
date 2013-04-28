@@ -1,5 +1,5 @@
 class Wall < Chingu::GameObject
-  trait  :bounding_box, debug: true
+  trait  :bounding_box
   traits :collision_detection
 
   attr_reader :direction
@@ -10,7 +10,9 @@ class Wall < Chingu::GameObject
     @direction = options[:direction]
 
     cache_bounding_box
-    #set_bounding_box_from_direction
+
+    @cached_bounding_box, @_x_diff, @_y_diff = \
+      self.class.bounding_box_for(@direction, @image, @cached_bounding_box)
   end
 
   def draw
@@ -18,33 +20,28 @@ class Wall < Chingu::GameObject
     draw_trait
   end
 
-  def set_bounding_box_from_direction
-    @cached_bounding_box.w = 30
-    @cached_bounding_box.h = 30
+  def self.bounding_box_for(direction, image, bb)
+    @bb ||= {}
+    @bb[direction] ||= begin
+      min_x = min_y = 1.0 / 0
+      max_x = max_y = 0
 
-    case @direction
-    when :right
-      @_x_diff = 5
-      @_y_diff = 5
-    when :down
-      @_x_diff = -5
-      @_y_diff = -5
-    when :down_left
-      @_x_diff = 7
-      @_y_diff = 7
-    when :left
-      @_x_diff = -7
-      @_y_diff = -7
-    when :up_left
-      @_x_diff = 10
-      @_y_diff = 10
-    when :up
-      @_x_diff = -10
-      @_y_diff = -10
+      image.each do |c, x, y|
+        min_x = x if c[1] > 0 and x < min_x
+        max_x = x if c[1] > 0 and x > max_x
+
+        min_y = y if c[1] > 0 and y < min_y
+        max_y = y if c[1] > 0 and y > max_y
+      end
+
+      bb.w = max_x - min_x + 1
+      bb.h = max_y - min_y + 1
+
+      x_diff = min_x - Cell::DIAMETER / 2
+      y_diff = min_y - Cell::RADIUS * Math.sqrt(3) / 2.0 - 8
+
+      [bb, x_diff, y_diff]
     end
-
-    @cached_bounding_box.x = self.x + @_x_diff
-    @cached_bounding_box.y = self.y + @_x_diff
   end
 end
 
@@ -126,7 +123,7 @@ class Honeycomb
   CELL_OFFSET_X_EVEN_ROW = CELL_DISTANCE_X / 2.0
 
   DIRECTIONS = [:right, :down, :down_left, :left, :up_left, :up]
-  NUM_CELLS = 1
+  NUM_CELLS = 8
 
   attr_reader :cells
 
@@ -221,7 +218,7 @@ class Player < Chingu::GameObject
   WIDTH, HEIGHT = [16, 16]
   VELOCITY_INC = 0.5
 
-  trait  :bounding_box, debug: true
+  trait  :bounding_box
   traits :collision_detection
 
   attr_accessor :current_cell

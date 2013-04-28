@@ -3,6 +3,24 @@ require "util"
 
 include Util
 
+class GameOver < Chingu::GameState
+  def setup
+    @text = Chingu::Text.create("GAME OVER (ESC to quit, RETURN to try again!)", :size => 40, :x => 30, :y => 100)
+    self.input = { :esc => :exit, :return => :try_again }
+    @layover = Color.new(0x99000000)
+  end
+
+  def draw
+    super
+    previous_game_state.draw
+    fill(@layover)
+  end
+
+  def try_again
+    pop_game_state  # pop back to our playing game state
+  end
+end
+
 class Play < Chingu::GameState
   trait :timer
 
@@ -30,6 +48,10 @@ class Play < Chingu::GameState
 
   def update
     super
+
+    Player.each_collision(Wall) do |p, w|
+      push_game_state(GameOver)
+    end
 
     # animations
     if rotating?
@@ -60,9 +82,6 @@ class Play < Chingu::GameState
         #if @player.current_cell.walls.map(&:direction).include?(dir)
           #puts "COLLISION"
         #end
-
-        ##
-        Player.each_collision(Wall) { |p, w| puts "collision with wall #{w}" }
 
         # Find new current cell (the ugly way)
         #puts "player #{@player.x},#{@player.y}"
