@@ -229,18 +229,20 @@ class Player < Chingu::GameObject
   def initialize(options={})
     super
 
-    self.angle = 180
     self.current_cell = options[:current_cell]
 
     @color = options[:color] || Color::BLUE
 
     self.image = TexPlay.create_blank_image($window, WIDTH + 2, HEIGHT + 3)
     self.image.paint do
+=begin
       polyline [
         WIDTH, 0,
         0, HEIGHT / 2,
         WIDTH, HEIGHT
       ], close: true, thickness: 2, color: @color
+=end
+      circle WIDTH / 2, WIDTH / 2, WIDTH / 2, color: @color, fill: true
     end
 
     cache_bounding_box

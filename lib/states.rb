@@ -14,11 +14,8 @@ class Play < Chingu::GameState
     super
 
     @honeycomb = Honeycomb.new
-    @player = Player.create(x: 0, y: 0, current_cell: @honeycomb.cells[0][0])
-
-    @camera_angle = 30
-    @camera_x = 0
-    @camera_y = 0
+    @player = Player.create(x: 0, y: 0, angle: 30,
+                            current_cell: @honeycomb.cells[0][0])
 
     every(1000, name: :move) do
       #advance
@@ -38,25 +35,25 @@ class Play < Chingu::GameState
     if rotating?
       t = Gosu::milliseconds - @rotation_old_time
       if t > DURATION_ROTATION
-        @camera_angle = @rotation_old_camera_angle + @rotation_change
+        @player.angle = @rotation_old_player_angle + @rotation_change
         @rotation_change = nil
       else
-        b = @rotation_old_camera_angle
+        b = @rotation_old_player_angle
         c = @rotation_change
-        @camera_angle = ease_in_out_quad(t, b, c, DURATION_ROTATION)
+        @player.angle = ease_in_out_quad(t, b, c, DURATION_ROTATION)
       end
     end
 
     if advancing?
       t = Gosu::milliseconds - @advance_old_time
       if t > DURATION_ADVANCE
-        @camera_x = @advance_old_camera_x + @advance_change_x
-        @camera_y = @advance_old_camera_y + @advance_change_y
+        @player.x = @advance_old_player_x + @advance_change_x
+        @player.y = @advance_old_player_y + @advance_change_y
         @advance_change_x = @advance_change_y = nil
-        #@honeycomb.move(@camera_x, @camera_y)
+        #@honeycomb.move(@player.x, @player.y)
 
         # Check collision on new current cell
-        #dir = Honeycomb.direction_from_angle(@camera_angle)
+        #dir = Honeycomb.direction_from_angle(@player.angle)
         #puts "current direction = #{dir}"
         #puts "@player.current_cell.walls = #{@player.current_cell.walls.map {|w| w.direction}}"
 
@@ -68,23 +65,23 @@ class Play < Chingu::GameState
         Player.each_collision(Wall) { |p, w| puts "collision with wall #{w}" }
 
         # Find new current cell (the ugly way)
-        #puts "camera #{@camera_x},#{@camera_y}"
+        #puts "player #{@player.x},#{@player.y}"
         @honeycomb.cells.each do |row|
           row.each do |cell|
-            if (@camera_x .. @camera_x + Cell::DIAMETER).cover?(cell.x) and
-               (@camera_y .. @camera_y + Cell::DIAMETER / 2).cover?(cell.y)
+            if (@player.x .. @player.x + Cell::DIAMETER).cover?(cell.x) and
+               (@player.y .. @player.y + Cell::DIAMETER / 2).cover?(cell.y)
               @player.current_cell = cell
             end
           end
         end
 
       else
-        b = @advance_old_camera_x
+        b = @advance_old_player_x
         c = @advance_change_x
-        @camera_x = ease_in_out_quad(t, b, c, DURATION_ADVANCE)
-        b = @advance_old_camera_y
+        @player.x = ease_in_out_quad(t, b, c, DURATION_ADVANCE)
+        b = @advance_old_player_y
         c = @advance_change_y
-        @camera_y = ease_in_out_quad(t, b, c, DURATION_ADVANCE)
+        @player.y = ease_in_out_quad(t, b, c, DURATION_ADVANCE)
       end
     end
 
@@ -95,31 +92,30 @@ class Play < Chingu::GameState
 
   def draw
     $window.translate(SCREEN_CENTER_X, SCREEN_CENTER_Y) do
-      $window.translate(-@camera_x, -@camera_y) do
-        $window.rotate(@camera_angle, @camera_x, @camera_y) do
+      $window.translate(-@player.x, -@player.y) do
+        $window.rotate(@player.angle, @player.x, @player.y) do
           @honeycomb.draw
+          super
         end
       end
-
-      super
     end
   end
 
   def advance
     if not moving?
-      @advance_old_camera_x = @camera_x
-      @advance_old_camera_y = @camera_y
+      @advance_old_player_x = @player.x
+      @advance_old_player_y = @player.y
       @advance_old_time = Gosu::milliseconds
 
       dist = Cell::RADIUS * Math.sqrt(3)
-      @advance_change_x = offset_x(90 - @camera_angle, dist)
-      @advance_change_y = offset_y(90 - @camera_angle, dist)
+      @advance_change_x = offset_x(90 - @player.angle, dist)
+      @advance_change_y = offset_y(90 - @player.angle, dist)
     end
   end
 
   def rotate_left
     if not moving?
-      @rotation_old_camera_angle = @camera_angle
+      @rotation_old_player_angle = @player.angle
       @rotation_old_time = Gosu::milliseconds
       @rotation_change = ANGLE_STEP
     end
@@ -127,7 +123,7 @@ class Play < Chingu::GameState
 
   def rotate_right
     if not moving?
-      @rotation_old_camera_angle = @camera_angle
+      @rotation_old_player_angle = @player.angle
       @rotation_old_time = Gosu::milliseconds
       @rotation_change = -ANGLE_STEP
     end
