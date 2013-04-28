@@ -19,6 +19,13 @@ class Honeycomb < Chingu::GameObjectList
 
         cell = Cell.new(x: x, y: y)
 
+        if i == 0 and j == 0
+          cell.image = TexPlay.create_blank_image($window, Cell::DIAMETER + 1, Cell::DIAMETER + 1)
+          cell.image.paint do
+            ngon Cell::RADIUS, Cell::RADIUS, Cell::RADIUS, 6, thickness: 3, color: Color::BLUE
+          end
+        end
+
         #@cell_adjacency_list[cell]
 
         add_random_gates(cell)
@@ -37,7 +44,7 @@ class Honeycomb < Chingu::GameObjectList
 end
 
 class Cell < Chingu::GameObject
-  RADIUS = 32
+  RADIUS = 64
   DIAMETER = RADIUS * 2
 
   COLOR = Color::WHITE

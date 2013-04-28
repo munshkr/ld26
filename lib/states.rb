@@ -13,14 +13,18 @@ class Play < Chingu::GameState
                             current_cell: @honeycomb.first)
 
     @camera_angle = 30
+    @camera_x = 0
+    @camera_y = 0
 
-    every(500, name: :move) do
-      advance
+    every(1000, name: :move) do
+      #advance
     end
 
     self.input = {
-      left: :rotate_left,
-      right: :rotate_right,
+      holding_up: :advance,
+      holding_down: :retreat,
+      holding_left: :rotate_left,
+      holding_right: :rotate_right,
     }
   end
 
@@ -34,15 +38,28 @@ class Play < Chingu::GameState
 
   def draw
     $window.translate(SCREEN_CENTER_X, SCREEN_CENTER_Y) do
-      $window.rotate(@camera_angle, 0, 0) do
-        @honeycomb.draw
+      $window.translate(-@camera_x, -@camera_y) do
+        $window.rotate(@camera_angle, @camera_x, @camera_y) do
+          @honeycomb.draw
+        end
       end
+
       super
     end
   end
 
   def advance
+    dist = Cell::RADIUS * Math.sqrt(3)
+    @camera_x += offset_x(90 - @camera_angle, dist)
+    @camera_y += offset_y(90 - @camera_angle, dist)
+
     @player.advance
+  end
+
+  def retreat
+    dist = Cell::RADIUS * Math.sqrt(3)
+    @camera_x -= offset_x(90 - @camera_angle, dist)
+    @camera_y -= offset_y(90 - @camera_angle, dist)
   end
 
   def rotate_left
