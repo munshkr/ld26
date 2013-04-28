@@ -76,6 +76,8 @@ class Honeycomb
   CELL_DISTANCE_Y = Cell::RADIUS * Math.sqrt(3) / 2.0
   CELL_OFFSET_X_EVEN_ROW = CELL_DISTANCE_X / 2.0
 
+  NUM_CELLS = 8
+
   attr_reader :cells
 
   def initialize(options={})
@@ -84,15 +86,17 @@ class Honeycomb
     offset_x = -(Cell::DIAMETER * 3 / 4.0)
     offset_y = 0
 
-    (-16 .. 16).each do |i|
-      (-16 .. 16).each do |j|
+    (-NUM_CELLS .. NUM_CELLS).each do |j|
+      row = []
+
+      (-NUM_CELLS .. NUM_CELLS).each do |i|
         x = offset_x + i * CELL_DISTANCE_X
         if j % 2 == 0
           x += CELL_OFFSET_X_EVEN_ROW
         end
         y = offset_y + (j * CELL_DISTANCE_Y)
 
-        cell = Cell.new(x: x, y: y)
+        cell = new_cell(x, y)
 
         if i == 0 and j == 0
           cell.image = TexPlay.create_blank_image($window, Cell::DIAMETER + 1, Cell::DIAMETER + 1)
@@ -101,14 +105,52 @@ class Honeycomb
           end
         end
 
-        add_random_gates(cell)
-        @cells << cell
+        row << cell
       end
+
+      @cells << row
     end
   end
 
+  # This generates a new row and column of cells in the direction of the
+  # movement, and deletes another row and column in the oposite direction
+  def move(cx, cy)
+    # append and insert new columns on each row
+    @cells.each do |row|
+      row.unshift(new_cell(row.first.x - CELL_DISTANCE_X, row.first.y))
+      row << new_cell(row.last.x + CELL_DISTANCE_X, row.last.y)
+    end
+
+    # append and insert new rows
+    2.times do
+      new_row = @cells.first.map { |c| new_cell(c.x + (@cells.size % 2 == 0 ? -1 : 1) * CELL_OFFSET_X_EVEN_ROW, c.y - CELL_DISTANCE_Y) }
+      @cells.unshift(new_row)
+
+      new_row = @cells.last.map { |c| new_cell(c.x + (@cells.size % 2 == 0 ? -1 : 1) * CELL_OFFSET_X_EVEN_ROW, c.y + CELL_DISTANCE_Y) }
+      @cells << new_row
+    end
+
+    @cells.each do |row|
+      row.delete_if do |c|
+        (cx - c.x).abs > SCREEN_WIDTH ||
+        (cy - c.y).abs > SCREEN_HEIGHT
+      end
+    end
+    @cells.delete_if { |r| r.empty? }
+
+    puts "rows: #{@cells.size}, cols: #{@cells.first.size}"
+  end
+
   def draw
-    @cells.each { |c| c.draw }
+    @cells.each do |row|
+      row.each { |c| c.draw }
+    end
+  end
+
+  def new_cell(x, y)
+    cell = Cell.new(x: x, y: y)
+    add_random_gates(cell)
+    cell
   end
 
   # NOTE temporal

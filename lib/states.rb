@@ -45,9 +45,7 @@ class Play < Chingu::GameState
       else
         b = @rotation_old_camera_angle
         c = @rotation_change
-        val = ease_in_out_quad(t, b, c, DURATION_ROTATION)
-        puts val
-        @camera_angle = val
+        @camera_angle = ease_in_out_quad(t, b, c, DURATION_ROTATION)
       end
     end
 
@@ -58,6 +56,7 @@ class Play < Chingu::GameState
         @camera_y = @advance_old_camera_y + @advance_change_y
         @advance_change_x = @advance_change_y = nil
         @player.advance
+        @honeycomb.move(@camera_x, @camera_y)
       else
         b = @advance_old_camera_x
         c = @advance_change_x
