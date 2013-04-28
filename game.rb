@@ -6,9 +6,13 @@ require "texplay"
 $LOAD_PATH << "lib"
 
 
+SCREEN_WIDTH, SCREEN_HEIGHT      = [800, 600]
+SCREEN_CENTER_X, SCREEN_CENTER_Y = [SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2]
+
+
 class Game < Chingu::Window
   def initialize
-    super 800, 600, false
+    super SCREEN_WIDTH, SCREEN_HEIGHT, false
 
     push_game_state(Play)
 
@@ -21,13 +25,16 @@ end
 class Play < Chingu::GameState
   trait :timer
 
+  ANGLE_STEP = 60
+
   def initialize
     super
 
     @honeycomb = Honeycomb.new
-    @player = Player.create(x: $window.width / 2,
-                            y: $window.height / 2,
+    @player = Player.create(x: 0, y: 0,
                             current_cell: @honeycomb.first)
+
+    @camera_angle = 0
 
     every(500, name: :move) do
       advance
@@ -48,8 +55,12 @@ class Play < Chingu::GameState
   end
 
   def draw
-    @honeycomb.draw
-    super
+    $window.translate(SCREEN_CENTER_X, SCREEN_CENTER_Y) do
+      $window.rotate(@camera_angle, 0, 0) do
+        @honeycomb.draw
+      end
+      super
+    end
   end
 
   def advance
@@ -57,10 +68,12 @@ class Play < Chingu::GameState
   end
 
   def rotate_left
+    @camera_angle += ANGLE_STEP
     @player.rotate_left
   end
 
   def rotate_right
+    @camera_angle -= ANGLE_STEP
     @player.rotate_right
   end
 end
@@ -73,8 +86,8 @@ class Honeycomb < Chingu::GameObjectList
 
     #@cell_adjacency_list = {}
 
-    offset_x = Cell::WIDTH / 4
-    offset_y = Cell::HEIGHT / 2
+    offset_x = -Cell::WIDTH
+    offset_y = -Cell::HEIGHT
 
     (-32 .. 32).each do |i|
       (-32 .. 32).each do |j|
