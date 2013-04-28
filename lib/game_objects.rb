@@ -6,8 +6,8 @@ class Honeycomb < Chingu::GameObjectList
 
     #@cell_adjacency_list = {}
 
-    offset_x = -Cell::WIDTH
-    offset_y = -Cell::HEIGHT
+    offset_x = -(Cell::WIDTH / 2)
+    offset_y = -(Cell::HEIGHT / 2)
 
     (-32 .. 32).each do |i|
       (-32 .. 32).each do |j|
