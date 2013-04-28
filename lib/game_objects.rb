@@ -1,16 +1,14 @@
-class Honeycomb < Chingu::GameObjectList
+class Honeycomb
   attr_reader :cells
 
   def initialize(options={})
-    super
-
-    #@cell_adjacency_list = {}
+    @cells = []
 
     offset_x = -(Cell::DIAMETER * 3 / 4.0)
     offset_y = 0
 
-    (-32 .. 32).each do |i|
-      (-32 .. 32).each do |j|
+    (-16 .. 16).each do |i|
+      (-16 .. 16).each do |j|
         x = offset_x + i * (Cell::DIAMETER * 3 / 2.0)
         if j % 2 == 0
           x += Cell::DIAMETER * 3 / 4.0
@@ -26,12 +24,14 @@ class Honeycomb < Chingu::GameObjectList
           end
         end
 
-        #@cell_adjacency_list[cell]
-
         add_random_gates(cell)
-        add_game_object(cell)
+        @cells << cell
       end
     end
+  end
+
+  def draw
+    @cells.each { |c| c.draw }
   end
 
   # NOTE temporal

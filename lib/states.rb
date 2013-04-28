@@ -15,7 +15,7 @@ class Play < Chingu::GameState
 
     @honeycomb = Honeycomb.new
     @player = Player.create(x: 0, y: 0,
-                            current_cell: @honeycomb.first)
+                            current_cell: @honeycomb.cells.first)
 
     @camera_angle = 30
     @camera_x = 0
