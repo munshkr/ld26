@@ -14,15 +14,14 @@ class Play < Chingu::GameState
     super
 
     @honeycomb = Honeycomb.new
-    @player = Player.create(x: 0, y: 0,
-                            current_cell: @honeycomb.cells.first)
+    @player = Player.create(x: 0, y: 0, current_cell: @honeycomb.cells[0][0])
 
     @camera_angle = 30
     @camera_x = 0
     @camera_y = 0
 
     every(1000, name: :move) do
-      advance
+      #advance
     end
 
     self.input = {
@@ -54,7 +53,31 @@ class Play < Chingu::GameState
         @camera_x = @advance_old_camera_x + @advance_change_x
         @camera_y = @advance_old_camera_y + @advance_change_y
         @advance_change_x = @advance_change_y = nil
-        @honeycomb.move(@camera_x, @camera_y)
+        #@honeycomb.move(@camera_x, @camera_y)
+
+        # Check collision on new current cell
+        #dir = Honeycomb.direction_from_angle(@camera_angle)
+        #puts "current direction = #{dir}"
+        #puts "@player.current_cell.walls = #{@player.current_cell.walls.map {|w| w.direction}}"
+
+        #if @player.current_cell.walls.map(&:direction).include?(dir)
+          #puts "COLLISION"
+        #end
+
+        ##
+        Player.each_collision(Wall) { |p, w| puts "collision with wall #{w}" }
+
+        # Find new current cell (the ugly way)
+        #puts "camera #{@camera_x},#{@camera_y}"
+        @honeycomb.cells.each do |row|
+          row.each do |cell|
+            if (@camera_x .. @camera_x + Cell::DIAMETER).cover?(cell.x) and
+               (@camera_y .. @camera_y + Cell::DIAMETER / 2).cover?(cell.y)
+              @player.current_cell = cell
+            end
+          end
+        end
+
       else
         b = @advance_old_camera_x
         c = @advance_change_x

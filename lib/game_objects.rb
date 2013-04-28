@@ -1,28 +1,76 @@
+class Wall < Chingu::GameObject
+  trait  :bounding_box, debug: true
+  traits :collision_detection
+
+  attr_reader :direction
+
+  def initialize(options={})
+    super
+
+    @direction = options[:direction]
+
+    cache_bounding_box
+    #set_bounding_box_from_direction
+  end
+
+  def draw
+    super
+    draw_trait
+  end
+
+  def set_bounding_box_from_direction
+    @cached_bounding_box.w = 30
+    @cached_bounding_box.h = 30
+
+    case @direction
+    when :right
+      @_x_diff = 5
+      @_y_diff = 5
+    when :down
+      @_x_diff = -5
+      @_y_diff = -5
+    when :down_left
+      @_x_diff = 7
+      @_y_diff = 7
+    when :left
+      @_x_diff = -7
+      @_y_diff = -7
+    when :up_left
+      @_x_diff = 10
+      @_y_diff = 10
+    when :up
+      @_x_diff = -10
+      @_y_diff = -10
+    end
+
+    @cached_bounding_box.x = self.x + @_x_diff
+    @cached_bounding_box.y = self.y + @_x_diff
+  end
+end
+
 class Cell < Chingu::GameObject
   RADIUS = 64
   DIAMETER = RADIUS * 2
   WALL_WIDTH = 5
 
-  COLOR = Color::WHITE
-  COLOR.alpha = 60
+  COLOR = Color::WHITE.dup
+  COLOR.alpha = 10
 
   attr_accessor :walls
 
   def initialize(options={})
     super(options.merge(image: self.class.cell_image))
-    self.walls = options[:walls]
+    self.walls = options[:walls].map do |k|
+      Wall.new(x: self.x - 1,
+               y: self.y + 8,
+               image: self.class.wall_image(k),
+               direction: k)
+    end
   end
 
   def draw
     super
-    draw_walls
-  end
-
-  def draw_walls
-    walls.each do |wall|
-      self.class.wall_image(wall).draw(self.x - RADIUS,
-                                       self.y - RADIUS * (Math.sqrt(3) / 2.0), 0)
-    end
+    self.walls.each { |w| w.draw }
   end
 
   def self.cell_image
@@ -77,7 +125,8 @@ class Honeycomb
   CELL_DISTANCE_Y = Cell::RADIUS * Math.sqrt(3) / 2.0
   CELL_OFFSET_X_EVEN_ROW = CELL_DISTANCE_X / 2.0
 
-  NUM_CELLS = 8
+  DIRECTIONS = [:right, :down, :down_left, :left, :up_left, :up]
+  NUM_CELLS = 1
 
   attr_reader :cells
 
@@ -152,13 +201,18 @@ class Honeycomb
     Cell.new(x: x, y: y, walls: random_walls)
   end
 
-  # NOTE temporal
   def random_walls(factor=6)
     walls = []
-    [:right, :down, :down_left, :left, :up_left, :up].each do |wall|
+    DIRECTIONS.each do |wall|
       walls << wall if rand(factor).zero?
     end
     walls
+  end
+
+  def self.direction_from_angle(angle)
+    a = angle % 360
+    h = DIRECTIONS.map.with_index { |d, i| [d, (i * 60 .. (i+1) * 60)] }
+    h.find { |d, r| r.cover?(a) }.first
   end
 end
 
@@ -167,10 +221,16 @@ class Player < Chingu::GameObject
   WIDTH, HEIGHT = [16, 16]
   VELOCITY_INC = 0.5
 
+  trait  :bounding_box, debug: true
+  traits :collision_detection
+
+  attr_accessor :current_cell
+
   def initialize(options={})
     super
 
     self.angle = 180
+    self.current_cell = options[:current_cell]
 
     @color = options[:color] || Color::BLUE
 
@@ -182,5 +242,7 @@ class Player < Chingu::GameObject
         WIDTH, HEIGHT
       ], close: true, thickness: 2, color: @color
     end
+
+    cache_bounding_box
   end
 end
