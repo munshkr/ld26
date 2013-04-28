@@ -10,11 +10,19 @@ class Cell < Chingu::GameObject
 
   def initialize(options={})
     super(options.merge(image: self.class.cell_image))
+    self.walls = options[:walls]
   end
 
   def draw
     super
     draw_walls
+  end
+
+  def draw_walls
+    walls.each do |wall|
+      self.class.wall_image(wall).draw(self.x - RADIUS,
+                                       self.y - RADIUS * (Math.sqrt(3) / 2.0), 0)
+    end
   end
 
   def self.cell_image
@@ -60,13 +68,6 @@ class Cell < Chingu::GameObject
         end
       end
       image
-    end
-  end
-
-  def draw_walls
-    walls.each do |wall|
-      self.class.wall_image(wall).draw(self.x - RADIUS, self.y - RADIUS * (Math.sqrt(3) / 2.0), 0)
-      #self.class.wall_image(wall).draw(self.x, self.y, 0)
     end
   end
 end
@@ -148,24 +149,21 @@ class Honeycomb
   end
 
   def new_cell(x, y)
-    cell = Cell.new(x: x, y: y)
-    add_random_walls(cell)
-    cell
+    Cell.new(x: x, y: y, walls: random_walls)
   end
 
   # NOTE temporal
-  def add_random_walls(cell)
-    cell.walls = []
+  def random_walls(factor=6)
+    walls = []
     [:right, :down, :down_left, :left, :up_left, :up].each do |wall|
-      cell.walls << wall if rand(6).zero?
+      walls << wall if rand(factor).zero?
     end
+    walls
   end
 end
 
 
 class Player < Chingu::GameObject
-  trait :collision_detection
-
   WIDTH, HEIGHT = [16, 16]
   VELOCITY_INC = 0.5
 
@@ -184,16 +182,5 @@ class Player < Chingu::GameObject
         WIDTH, HEIGHT
       ], close: true, thickness: 2, color: @color
     end
-
-    cache_bounding_box
-  end
-
-  def advance
-  end
-
-  def rotate_left
-  end
-
-  def rotate_right
   end
 end

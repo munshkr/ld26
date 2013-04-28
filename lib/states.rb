@@ -41,7 +41,6 @@ class Play < Chingu::GameState
       if t > DURATION_ROTATION
         @camera_angle = @rotation_old_camera_angle + @rotation_change
         @rotation_change = nil
-        @player.rotate_right
       else
         b = @rotation_old_camera_angle
         c = @rotation_change
@@ -55,7 +54,6 @@ class Play < Chingu::GameState
         @camera_x = @advance_old_camera_x + @advance_change_x
         @camera_y = @advance_old_camera_y + @advance_change_y
         @advance_change_x = @advance_change_y = nil
-        @player.advance
         @honeycomb.move(@camera_x, @camera_y)
       else
         b = @advance_old_camera_x
