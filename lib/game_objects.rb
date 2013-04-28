@@ -1,48 +1,3 @@
-class Honeycomb
-  attr_reader :cells
-
-  def initialize(options={})
-    @cells = []
-
-    offset_x = -(Cell::DIAMETER * 3 / 4.0)
-    offset_y = 0
-
-    (-16 .. 16).each do |i|
-      (-16 .. 16).each do |j|
-        x = offset_x + i * (Cell::DIAMETER * 3 / 2.0)
-        if j % 2 == 0
-          x += Cell::DIAMETER * 3 / 4.0
-        end
-        y = offset_y + (j * (((Cell::RADIUS) * Math.sqrt(3)) / 2.0))
-
-        cell = Cell.new(x: x, y: y)
-
-        if i == 0 and j == 0
-          cell.image = TexPlay.create_blank_image($window, Cell::DIAMETER + 1, Cell::DIAMETER + 1)
-          cell.image.paint do
-            ngon Cell::RADIUS, Cell::RADIUS, Cell::RADIUS, 6, thickness: 3, color: Color::BLUE
-          end
-        end
-
-        add_random_gates(cell)
-        @cells << cell
-      end
-    end
-  end
-
-  def draw
-    @cells.each { |c| c.draw }
-  end
-
-  # NOTE temporal
-  def add_random_gates(cell)
-    cell.gates = []
-    [:right, :down, :down_left, :left, :up_left, :up].each do |gate|
-      cell.gates << gate if rand(6).zero?
-    end
-  end
-end
-
 class Cell < Chingu::GameObject
   RADIUS = 64
   DIAMETER = RADIUS * 2
@@ -115,6 +70,56 @@ class Cell < Chingu::GameObject
     end
   end
 end
+
+class Honeycomb
+  CELL_DISTANCE_X = Cell::DIAMETER * 3 / 2.0
+  CELL_DISTANCE_Y = Cell::RADIUS * Math.sqrt(3) / 2.0
+  CELL_OFFSET_X_EVEN_ROW = CELL_DISTANCE_X / 2.0
+
+  attr_reader :cells
+
+  def initialize(options={})
+    @cells = []
+
+    offset_x = -(Cell::DIAMETER * 3 / 4.0)
+    offset_y = 0
+
+    (-16 .. 16).each do |i|
+      (-16 .. 16).each do |j|
+        x = offset_x + i * CELL_DISTANCE_X
+        if j % 2 == 0
+          x += CELL_OFFSET_X_EVEN_ROW
+        end
+        y = offset_y + (j * CELL_DISTANCE_Y)
+
+        cell = Cell.new(x: x, y: y)
+
+        if i == 0 and j == 0
+          cell.image = TexPlay.create_blank_image($window, Cell::DIAMETER + 1, Cell::DIAMETER + 1)
+          cell.image.paint do
+            ngon Cell::RADIUS, Cell::RADIUS, Cell::RADIUS, 6, thickness: 3, color: Color::BLUE
+          end
+        end
+
+        add_random_gates(cell)
+        @cells << cell
+      end
+    end
+  end
+
+  def draw
+    @cells.each { |c| c.draw }
+  end
+
+  # NOTE temporal
+  def add_random_gates(cell)
+    cell.gates = []
+    [:right, :down, :down_left, :left, :up_left, :up].each do |gate|
+      cell.gates << gate if rand(6).zero?
+    end
+  end
+end
+
 
 class Player < Chingu::GameObject
   WIDTH, HEIGHT = [16, 16]
