@@ -3,24 +3,6 @@ require "util"
 
 include Util
 
-class GameOver < Chingu::GameState
-  def setup
-    @text = Chingu::Text.create("GAME OVER (ESC to quit, RETURN to try again!)", :size => 40, :x => 30, :y => 100)
-    self.input = { :esc => :exit, :return => :try_again }
-    @layover = Color.new(0x99000000)
-  end
-
-  def draw
-    super
-    previous_game_state.draw
-    fill(@layover)
-  end
-
-  def try_again
-    pop_game_state  # pop back to our playing game state
-  end
-end
-
 class Play < Chingu::GameState
   trait :timer
 
@@ -31,14 +13,6 @@ class Play < Chingu::GameState
   def initialize
     super
 
-    @honeycomb = Honeycomb.new
-    @player = Player.create(x: 0, y: 0, angle: 30,
-                            current_cell: @honeycomb.cells[0][0])
-
-    every(1000, name: :move) do
-      #advance
-    end
-
     self.input = {
       holding_up: :advance,
       holding_left: :rotate_left,
@@ -46,11 +20,24 @@ class Play < Chingu::GameState
     }
   end
 
+  def setup
+    Cell.destroy_all
+    Wall.destroy_all
+    Player.destroy_all
+
+    @player = Player.create(x: 0, y: 0, angle: 30)
+    @honeycomb = Honeycomb.new
+
+    every(1000, name: :move) do
+      advance
+    end
+  end
+
   def update
     super
 
     Player.each_collision(Wall) do |p, w|
-      push_game_state(GameOver)
+      switch_game_state(Play)
     end
 
     # animations
@@ -72,7 +59,7 @@ class Play < Chingu::GameState
         @player.x = @advance_old_player_x + @advance_change_x
         @player.y = @advance_old_player_y + @advance_change_y
         @advance_change_x = @advance_change_y = nil
-        #@honeycomb.move(@player.x, @player.y)
+        @honeycomb.move(@player.x, @player.y)
 
         # Check collision on new current cell
         #dir = Honeycomb.direction_from_angle(@player.angle)
@@ -113,7 +100,7 @@ class Play < Chingu::GameState
     $window.translate(SCREEN_CENTER_X, SCREEN_CENTER_Y) do
       $window.translate(-@player.x, -@player.y) do
         $window.rotate(@player.angle, @player.x, @player.y) do
-          @honeycomb.draw
+          @honeycomb.draw if @honeycomb
           super
         end
       end

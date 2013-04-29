@@ -16,11 +16,12 @@ class Game < Chingu::Window
   def initialize
     super SCREEN_WIDTH, SCREEN_HEIGHT, false
 
-    push_game_state(Play)
-
     self.input = {
       escape: :exit,
     }
+
+    switch_game_state(Play)
+    #transitional_game_state(Chingu::GameStates::FadeTo, speed: 10)
   end
 end
 
