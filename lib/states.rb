@@ -14,27 +14,34 @@ class Play < Chingu::GameState
     super
 
     self.input = {
-      holding_up: :advance,
+      holding_up: :manual_advance,
       holding_left: :rotate_left,
       holding_right: :rotate_right,
     }
+
   end
 
   def setup
     Cell.destroy_all
     Wall.destroy_all
     Player.destroy_all
+    Chingu::Text.destroy_all
+
+    @score = 0
+    @score_title = Chingu::Text.new(text: @score, x: SCREEN_WIDTH / 2 - 50, y: SCREEN_HEIGHT / 2 - 50, size: 30)
 
     @player = Player.create(x: 0, y: 0, angle: 30)
     @honeycomb = Honeycomb.new
 
-    every(1000, name: :move) do
+    every([1000 - (@score / 500) * 50, 150].max, name: :move) do
       advance
     end
   end
 
   def update
     super
+
+    @score_title.text = @score
 
     Player.each_collision(Wall) do |p, w|
       switch_game_state(Play)
@@ -104,6 +111,7 @@ class Play < Chingu::GameState
           super
         end
       end
+      @score_title.draw
     end
   end
 
@@ -116,7 +124,13 @@ class Play < Chingu::GameState
       dist = Cell::RADIUS * Math.sqrt(3)
       @advance_change_x = offset_x(90 - @player.angle, dist)
       @advance_change_y = offset_y(90 - @player.angle, dist)
+
+      @score += 10
     end
+  end
+
+  def manual_advance
+    @score += 15 if advance
   end
 
   def rotate_left
